@@ -1,71 +1,202 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const bcrypt = require('bcryptjs');
+const path = require('path');
 
 dotenv.config();
 
 const User = require('./models/User');
 const Question = require('./models/Question');
+const Interview = require('./models/Interview');
+const Resume = require('./models/Resume');
+const questionBank = require('./data');
 
-const questions = [
-  { text: 'What is closure in JavaScript? Explain with an example.', category: 'JavaScript', difficulty: 'Medium', expectedAnswer: 'A closure is a function that has access to variables from its outer (enclosing) scope even after the outer function has returned. It captures the surrounding state.', keywords: ['closure', 'scope', 'outer function', 'lexical scope', 'inner function'], timeLimit: 120 },
-  { text: 'Explain the difference between var, let, and const in JavaScript.', category: 'JavaScript', difficulty: 'Easy', expectedAnswer: 'var is function-scoped and hoisted. let is block-scoped and not initialized before declaration. const is block-scoped and cannot be reassigned.', keywords: ['var', 'let', 'const', 'scope', 'hoisting', 'block', 'function scope'], timeLimit: 90 },
-  { text: 'What is the event loop in JavaScript and how does it work?', category: 'JavaScript', difficulty: 'Hard', expectedAnswer: 'The event loop is a mechanism that allows JavaScript to perform non-blocking operations. It monitors the call stack and callback queue, moving callbacks to the stack when it is empty.', keywords: ['event loop', 'call stack', 'callback queue', 'non-blocking', 'asynchronous', 'microtask'], timeLimit: 150 },
-  { text: 'Explain Promises and async/await in JavaScript.', category: 'JavaScript', difficulty: 'Medium', expectedAnswer: 'Promises represent eventual completion of async operations with .then() and .catch() chains. Async/await is syntactic sugar over promises making async code look synchronous.', keywords: ['promise', 'async', 'await', 'resolve', 'reject', 'then', 'catch', 'asynchronous'], timeLimit: 120 },
-  { text: 'What is prototypal inheritance in JavaScript?', category: 'JavaScript', difficulty: 'Medium', expectedAnswer: 'JavaScript uses prototypal inheritance where objects inherit directly from other objects via the prototype chain. Every object has a __proto__ property pointing to its prototype.', keywords: ['prototype', 'inheritance', '__proto__', 'Object.create', 'prototype chain'], timeLimit: 120 },
+const DAY = 24 * 60 * 60 * 1000;
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = (arr) => arr[rand(0, arr.length - 1)];
+const sample = (arr, n) => [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
-  { text: 'What is the Virtual DOM in React and why is it used?', category: 'React', difficulty: 'Easy', expectedAnswer: 'Virtual DOM is a lightweight JavaScript representation of the real DOM. React uses it to efficiently update the UI by diffing the new virtual DOM with the previous one and applying minimal changes.', keywords: ['virtual DOM', 'diffing', 'reconciliation', 'real DOM', 'performance', 'rendering'], timeLimit: 90 },
-  { text: 'Explain React Hooks. What problem do they solve?', category: 'React', difficulty: 'Medium', expectedAnswer: 'React Hooks (useState, useEffect, useContext etc.) let you use state and lifecycle features in functional components, eliminating the need for class components and making code more reusable.', keywords: ['hooks', 'useState', 'useEffect', 'functional component', 'state', 'lifecycle'], timeLimit: 120 },
-  { text: 'What is the difference between controlled and uncontrolled components in React?', category: 'React', difficulty: 'Medium', expectedAnswer: 'Controlled components have their form data controlled by React state. Uncontrolled components store their form data in the DOM itself, accessed via refs.', keywords: ['controlled', 'uncontrolled', 'state', 'ref', 'form', 'input', 'DOM'], timeLimit: 90 },
-  { text: 'Explain Context API and when you would use it over Redux.', category: 'React', difficulty: 'Hard', expectedAnswer: 'Context API provides a way to pass data through the component tree without prop drilling. Use it for simple global state. Redux is better for complex state with many actions, middleware, and dev tools.', keywords: ['context', 'provider', 'consumer', 'prop drilling', 'global state', 'redux'], timeLimit: 150 },
-  { text: 'What is React.memo and useMemo? How do they differ?', category: 'React', difficulty: 'Hard', expectedAnswer: 'React.memo is a HOC that memoizes a component to prevent re-renders if props haven\'t changed. useMemo is a hook that memoizes a computed value. memo prevents renders, useMemo prevents recomputation.', keywords: ['memo', 'useMemo', 'memoization', 'performance', 'HOC', 're-render', 'optimization'], timeLimit: 120 },
-
-  { text: 'What is Node.js and what makes it suitable for building APIs?', category: 'Node.js', difficulty: 'Easy', expectedAnswer: 'Node.js is a JavaScript runtime built on Chrome V8. It uses an event-driven, non-blocking I/O model making it lightweight and efficient, ideal for data-intensive real-time applications and REST APIs.', keywords: ['Node.js', 'V8', 'event-driven', 'non-blocking', 'I/O', 'runtime', 'asynchronous'], timeLimit: 90 },
-  { text: 'Explain middleware in Express.js.', category: 'Node.js', difficulty: 'Medium', expectedAnswer: 'Middleware are functions that have access to request, response objects and the next function. They execute in order and can modify req/res, end the request cycle, or call next() to pass control.', keywords: ['middleware', 'Express', 'request', 'response', 'next', 'pipeline'], timeLimit: 90 },
-  { text: 'What is the difference between REST and GraphQL APIs?', category: 'Node.js', difficulty: 'Medium', expectedAnswer: 'REST uses multiple endpoints with fixed data structures and HTTP methods. GraphQL uses a single endpoint where clients specify exact data needs, avoiding over-fetching and under-fetching.', keywords: ['REST', 'GraphQL', 'endpoint', 'over-fetching', 'query', 'mutation', 'schema'], timeLimit: 120 },
-
-  { text: 'What is the difference between SQL and NoSQL databases?', category: 'MongoDB', difficulty: 'Easy', expectedAnswer: 'SQL databases are relational with structured schemas and use SQL. NoSQL databases are non-relational, schema-flexible, and scale horizontally. MongoDB stores documents in BSON format.', keywords: ['SQL', 'NoSQL', 'relational', 'schema', 'BSON', 'document', 'horizontal scaling'], timeLimit: 90 },
-  { text: 'Explain MongoDB aggregation pipeline.', category: 'MongoDB', difficulty: 'Hard', expectedAnswer: 'The aggregation pipeline processes documents through stages like $match, $group, $sort, $project, $lookup. Each stage transforms documents and passes results to the next stage.', keywords: ['aggregation', 'pipeline', '$match', '$group', '$sort', '$project', '$lookup'], timeLimit: 150 },
-
-  { text: 'Explain the concept of Big O notation and why it matters.', category: 'DSA', difficulty: 'Easy', expectedAnswer: 'Big O notation describes the worst-case time or space complexity of an algorithm as input size grows. It helps compare algorithms independently of hardware. O(1) is constant, O(n) is linear, O(n²) is quadratic.', keywords: ['Big O', 'time complexity', 'space complexity', 'O(n)', 'O(1)', 'algorithm', 'worst case'], timeLimit: 120 },
-  { text: 'What is the difference between a stack and a queue? Give real-world examples.', category: 'DSA', difficulty: 'Easy', expectedAnswer: 'Stack is LIFO (Last In First Out) - like a stack of plates or browser back button. Queue is FIFO (First In First Out) - like a print queue or task scheduling.', keywords: ['stack', 'queue', 'LIFO', 'FIFO', 'push', 'pop', 'enqueue', 'dequeue'], timeLimit: 90 },
-  { text: 'Explain the difference between BFS and DFS graph traversal.', category: 'DSA', difficulty: 'Medium', expectedAnswer: 'BFS explores nodes level by level using a queue, finding shortest paths. DFS explores as far as possible along branches using a stack/recursion, used for cycle detection and topological sorting.', keywords: ['BFS', 'DFS', 'breadth-first', 'depth-first', 'queue', 'stack', 'graph', 'traversal'], timeLimit: 120 },
-
-  { text: 'Design a URL shortener system like bit.ly.', category: 'System Design', difficulty: 'Hard', expectedAnswer: 'Components: API gateway, URL mapping service, database (Redis cache + SQL/NoSQL), load balancer. Use base62 encoding for short codes, cache popular URLs, handle redirects at CDN level for scale.', keywords: ['URL shortener', 'base62', 'cache', 'Redis', 'load balancer', 'hash', 'database', 'CDN'], timeLimit: 300 },
-  { text: 'How would you design a real-time chat application?', category: 'System Design', difficulty: 'Hard', expectedAnswer: 'Use WebSockets for real-time bidirectional communication. Components: connection manager, message broker (Kafka/Redis pub-sub), message storage (Cassandra), presence service, notification system.', keywords: ['WebSocket', 'real-time', 'message broker', 'pub-sub', 'Kafka', 'Redis', 'horizontal scaling'], timeLimit: 300 },
-
-  { text: 'Tell me about yourself and your background in software development.', category: 'Behavioral', difficulty: 'Easy', expectedAnswer: 'Use the "Present-Past-Future" formula. Discuss current role, relevant past experience, and career goals aligned with the position. Keep it professional and under 2 minutes.', keywords: ['experience', 'background', 'skills', 'career', 'professional', 'goals', 'role'], timeLimit: 120 },
-  { text: 'Describe a challenging technical problem you solved and how you approached it.', category: 'Behavioral', difficulty: 'Medium', expectedAnswer: 'Use STAR method: Situation (context), Task (your responsibility), Action (specific steps taken), Result (measurable outcome). Show problem-solving skills, collaboration, and impact.', keywords: ['STAR', 'problem solving', 'situation', 'task', 'action', 'result', 'challenge', 'technical'], timeLimit: 150 },
-  { text: 'How do you handle disagreements with team members on technical decisions?', category: 'Behavioral', difficulty: 'Medium', expectedAnswer: 'Discuss data-driven decision making, active listening, understanding the other perspective, presenting trade-offs objectively, seeking consensus, and escalating when necessary while maintaining respect.', keywords: ['disagreement', 'conflict', 'collaboration', 'communication', 'consensus', 'team', 'technical decision'], timeLimit: 120 },
-
-  { text: 'Where do you see yourself in 5 years?', category: 'HR', difficulty: 'Easy', expectedAnswer: 'Align your answer with the company\'s growth. Show ambition balanced with realistic goals. Mention skill development, leadership aspirations if appropriate, and contributing to the organization\'s success.', keywords: ['career growth', 'goals', 'leadership', '5 years', 'skills', 'development', 'contribution'], timeLimit: 90 },
-  { text: 'Why do you want to work at this company?', category: 'HR', difficulty: 'Easy', expectedAnswer: 'Research the company first. Mention specific aspects: culture, technology stack, products, mission, growth opportunities. Show genuine interest beyond salary. Align your values with theirs.', keywords: ['company culture', 'mission', 'values', 'growth', 'technology', 'opportunity', 'research'], timeLimit: 90 },
+// 13 profiles with different target roles + skills so the users list feels real
+const sampleUsers = [
+  { name: 'Aditya Verma', email: 'aditya@example.com', targetRole: 'Backend Engineer', bio: 'Node and databases person, prepping for product companies.', skills: ['Node.js', 'MongoDB', 'System Design', 'Docker'] },
+  { name: 'Priya Nair', email: 'priya@example.com', targetRole: 'Frontend Engineer', bio: 'React developer who loves clean UI and accessibility.', skills: ['React', 'JavaScript', 'HTML/CSS', 'Testing'] },
+  { name: 'Rohan Mehta', email: 'rohan@example.com', targetRole: 'Full Stack Developer', bio: 'MERN stack, building side projects to learn.', skills: ['React', 'Node.js', 'MongoDB', 'JavaScript'] },
+  { name: 'Sneha Kapoor', email: 'sneha@example.com', targetRole: 'SDE Intern', bio: 'Final year CS student grinding DSA.', skills: ['Data Structures', 'Algorithms', 'Java', 'OOP'] },
+  { name: 'Karthik Reddy', email: 'karthik@example.com', targetRole: 'DevOps Engineer', bio: 'Into containers, CI/CD and cloud infra.', skills: ['Docker', 'DevOps', 'Security', 'Git'] },
+  { name: 'Ananya Iyer', email: 'ananya@example.com', targetRole: 'Data-oriented Backend', bio: 'SQL nerd, learning distributed systems.', skills: ['DBMS/SQL', 'Python', 'System Design'] },
+  { name: 'Vikram Singh', email: 'vikram@example.com', targetRole: 'Java Backend', bio: 'Spring Boot at work, interviewing for senior roles.', skills: ['Java', 'OOP', 'DBMS/SQL', 'System Design'] },
+  { name: 'Meera Joshi', email: 'meera@example.com', targetRole: 'Frontend Engineer', bio: 'Design-minded engineer, ex-agency.', skills: ['React', 'HTML/CSS', 'JavaScript'] },
+  { name: 'Arjun Das', email: 'arjun@example.com', targetRole: 'SDE-1', bio: 'Fresh grad, balancing DSA with system design basics.', skills: ['Algorithms', 'Data Structures', 'JavaScript', 'React'] },
+  { name: 'Fatima Sheikh', email: 'fatima@example.com', targetRole: 'Python Developer', bio: 'Automation and scripting, moving into backend.', skills: ['Python', 'DBMS/SQL', 'Testing'] },
+  { name: 'Nikhil Rao', email: 'nikhil@example.com', targetRole: 'Security Engineer', bio: 'AppSec enthusiast, CTF on weekends.', skills: ['Security', 'Computer Networks', 'Operating Systems'] },
+  { name: 'Divya Menon', email: 'divya@example.com', targetRole: 'Full Stack Developer', bio: 'Bootcamp grad, first dev job hunt.', skills: ['React', 'Node.js', 'Git', 'HTML/CSS'] },
+  { name: 'Sameer Khan', email: 'sameer@example.com', targetRole: 'Platform Engineer', bio: 'Infra + backend, likes the low-level stuff.', skills: ['Operating Systems', 'Computer Networks', 'DevOps', 'Node.js'] },
 ];
 
-const seedDB = async () => {
+const verdictFor = (s) => (s >= 8 ? 'Strong answer' : s >= 6 ? 'Mostly solid' : s >= 4 ? 'Partial understanding' : 'Needs work');
+const feedbackFor = (s) =>
+  s >= 8 ? 'Clear, accurate, and hits the key points for this question.'
+  : s >= 6 ? 'Good direction with a couple of important details missing.'
+  : s >= 4 ? 'Partially correct but glosses over the core ideas.'
+  : 'Review this topic - the fundamentals are not solid yet.';
+
+const craftAnswer = (q, score) => {
+  const exp = q.expectedAnswer || '';
+  if (score >= 8) return exp;
+  if (score >= 5) {
+    const cut = Math.max(40, Math.floor(exp.length * 0.55));
+    return `${exp.slice(0, cut).trim()}.`;
+  }
+  const kw = (q.keywords && q.keywords[0]) || 'this concept';
+  return `I think it has to do with ${kw}, but I am not fully confident on the details.`;
+};
+
+const strengthsFor = (q, score) => (score >= 6 ? (q.keywords || []).slice(0, 2).map((k) => `Correctly referenced ${k}`) : []);
+const improvementsFor = (q, score) =>
+  score >= 8 ? [] : (q.keywords || []).slice(0, score >= 6 ? 2 : 3).map((k) => `Explain ${k} more precisely`);
+
+const buildInterview = (userId, questions, category, difficulty, completedAt, baseline, progress) => {
+  const answers = questions.map((q) => {
+    const score = clamp(Math.round(baseline + progress * 1.5 + (Math.random() * 3 - 1.5)), 0, 10);
+    return {
+      question: q._id,
+      questionText: q.text,
+      expectedAnswer: q.expectedAnswer,
+      keywords: q.keywords,
+      type: q.type,
+      userAnswer: craftAnswer(q, score),
+      score,
+      verdict: verdictFor(score),
+      feedback: feedbackFor(score),
+      strengths: strengthsFor(q, score),
+      improvements: improvementsFor(q, score),
+      scoreSource: Math.random() < 0.6 ? 'ai' : 'keyword',
+      timeTaken: rand(25, q.timeLimit || 120),
+    };
+  });
+  const totalScore = answers.reduce((s, a) => s + a.score, 0);
+  const maxScore = questions.length * 10;
+  return {
+    user: userId,
+    title: `${category} Practice`,
+    category,
+    difficulty,
+    source: 'standard',
+    answers,
+    totalQuestions: questions.length,
+    answeredQuestions: questions.length,
+    totalScore,
+    maxScore,
+    percentage: Math.round((totalScore / maxScore) * 100),
+    status: 'completed',
+    completedAt,
+    duration: answers.reduce((s, a) => s + a.timeTaken, 0),
+  };
+};
+
+const seed = async () => {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB');
 
-  await Question.deleteMany({});
-  console.log('Cleared questions');
+  await Promise.all([
+    Question.deleteMany({}),
+    Interview.deleteMany({}),
+    Resume.deleteMany({}),
+    User.deleteMany({}),
+  ]);
+  console.log('Cleared existing data');
 
-  await Question.insertMany(questions);
-  console.log(`Seeded ${questions.length} questions`);
+  // --- users (create() so the password hashing hook runs) ---
+  const admin = await User.create({
+    name: 'Admin User', email: 'admin@example.com', password: 'admin123',
+    role: 'admin', isVerified: true, targetRole: 'Platform', bio: 'Platform administrator.',
+  });
+  const demo = await User.create({
+    name: 'Demo User', email: 'demo@example.com', password: 'demo123', role: 'user',
+    isVerified: true, targetRole: 'Full Stack Developer', bio: 'Demo account for trying the platform.',
+    skills: ['React', 'Node.js', 'JavaScript', 'MongoDB'],
+  });
 
-  const adminExists = await User.findOne({ email: 'admin@example.com' });
-  if (!adminExists) {
-    await User.create({ name: 'Admin User', email: 'admin@example.com', password: 'admin123', role: 'admin' });
-    console.log('Created admin user: admin@example.com / admin123');
+  const others = [];
+  for (const u of sampleUsers) {
+    const created = await User.create({ ...u, password: 'password123', isVerified: true });
+    others.push(created);
+  }
+  console.log(`Created ${others.length + 2} users`);
+
+  // --- questions ---
+  const insertedQuestions = await Question.insertMany(
+    questionBank.map((q) => ({ ...q, source: 'seed', createdBy: admin._id }))
+  );
+  const byCategory = {};
+  insertedQuestions.forEach((q) => {
+    (byCategory[q.category] = byCategory[q.category] || []).push(q);
+  });
+  console.log(`Seeded ${insertedQuestions.length} questions`);
+
+  // --- interviews: dozens, spread across ~85 days, with per-user weak/strong areas ---
+  const categories = Object.keys(byCategory);
+  const learners = [demo, ...others];
+  const allInterviews = [];
+
+  for (const user of learners) {
+    const strong = sample(categories, 3);
+    const weak = sample(categories.filter((c) => !strong.includes(c)), 3);
+    const activeCats = [...new Set([...strong, ...weak, ...sample(categories, 2)])];
+    const n = rand(6, 12);
+
+    for (let i = 0; i < n; i++) {
+      const category = pick(activeCats);
+      const progress = n > 1 ? i / (n - 1) : 1; // improves over time
+      const daysAgo = Math.round(85 - 85 * progress) + rand(0, 3);
+      const completedAt = new Date(Date.now() - daysAgo * DAY - rand(0, 20) * 60 * 60 * 1000);
+      const baseline = strong.includes(category) ? 7.2 : weak.includes(category) ? 3.8 : 5.6;
+      const difficulty = pick(['Easy', 'Medium', 'Medium', 'Hard']);
+
+      const pool = byCategory[category];
+      const questions = sample(pool, Math.min(5, pool.length));
+      allInterviews.push(buildInterview(user._id, questions, category, difficulty, completedAt, baseline, progress));
+    }
   }
 
-  const demoExists = await User.findOne({ email: 'demo@example.com' });
-  if (!demoExists) {
-    await User.create({ name: 'Demo User', email: 'demo@example.com', password: 'demo123', role: 'user' });
-    console.log('Created demo user: demo@example.com / demo123');
+  await Interview.insertMany(allInterviews);
+  console.log(`Seeded ${allInterviews.length} completed interviews`);
+
+  // roll up per-user stats so the profile/dashboard headline numbers are populated
+  for (const user of learners) {
+    const done = allInterviews.filter((iv) => String(iv.user) === String(user._id));
+    if (!done.length) continue;
+    await User.findByIdAndUpdate(user._id, {
+      totalInterviews: done.length,
+      averageScore: Math.round(done.reduce((s, iv) => s + iv.percentage, 0) / done.length),
+    });
   }
 
-  console.log('\n✅ Database seeded successfully!');
+  // --- sample resumes (metadata only; backed by the seed placeholder file) ---
+  const samplePath = path.join(__dirname, 'uploads', 'resumes', 'sample-resume.txt');
+  const resumeOwners = [demo, admin, others[0], others[1], others[2]];
+  await Resume.insertMany(
+    resumeOwners.map((u, idx) => ({
+      user: u._id,
+      fileName: 'sample-resume.txt',
+      originalName: `${u.name.split(' ')[0]}_Resume.pdf`,
+      filePath: samplePath,
+      fileSize: 2048,
+      mimeType: 'text/plain',
+      isDefault: idx === 0,
+    }))
+  );
+  console.log(`Seeded ${resumeOwners.length} resumes`);
+
+  console.log('\nSeed complete.');
+  console.log('  demo@example.com / demo123');
+  console.log('  admin@example.com / admin123');
+  console.log('  sample users password: password123');
+  await mongoose.disconnect();
   process.exit(0);
 };
 
-seedDB().catch(err => { console.error(err); process.exit(1); });
+seed().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -1,0 +1,3 @@
+Sample resume placeholder used by the seed script so seeded resume records have a
+backing file. Real resume uploads should be text-based PDFs, which the "practice
+from resume" flow parses with pdf-parse to pull out skills.
