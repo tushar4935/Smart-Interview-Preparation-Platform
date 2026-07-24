@@ -5,11 +5,16 @@ import Navbar from './components/Navbar';
 import Toast from './components/Toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
+import Analytics from './pages/Analytics';
 import Interviews from './pages/Interviews';
 import InterviewSession from './pages/InterviewSession';
 import InterviewHistory from './pages/InterviewHistory';
@@ -25,21 +30,27 @@ const App = () => (
       <div className="min-h-screen bg-gray-950">
         <Navbar />
         <Toast />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/interviews" element={<ProtectedRoute><Interviews /></ProtectedRoute>} />
-          <Route path="/interviews/:id/session" element={<ProtectedRoute><InterviewSession /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute><InterviewHistory /></ProtectedRoute>} />
-          <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/admin/users" element={<AdminRoute><ManageUsers /></AdminRoute>} />
-          <Route path="/admin/questions" element={<AdminRoute><ManageQuestions /></AdminRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="/interviews" element={<ProtectedRoute><Interviews /></ProtectedRoute>} />
+            <Route path="/interviews/:id/session" element={<ProtectedRoute><InterviewSession /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><InterviewHistory /></ProtectedRoute>} />
+            <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><ManageUsers /></AdminRoute>} />
+            <Route path="/admin/questions" element={<AdminRoute><ManageQuestions /></AdminRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </div>
     </Router>
   </AuthProvider>

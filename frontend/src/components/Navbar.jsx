@@ -33,6 +33,7 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-6">
               {navLink('/dashboard', 'Dashboard')}
               {navLink('/interviews', 'Interviews')}
+              {navLink('/analytics', 'Analytics')}
               {navLink('/history', 'History')}
               {navLink('/resume', 'Resume')}
               {user.role === 'admin' && navLink('/admin', 'Admin')}
@@ -82,6 +83,7 @@ const Navbar = () => {
           <div className="md:hidden pb-4 flex flex-col gap-3 border-t border-gray-800 pt-3">
             {navLink('/dashboard', 'Dashboard')}
             {navLink('/interviews', 'Interviews')}
+            {navLink('/analytics', 'Analytics')}
             {navLink('/history', 'History')}
             {navLink('/resume', 'Resume')}
             {navLink('/profile', 'Profile')}

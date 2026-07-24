@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// in dev we lean on the Vite proxy (/api). in prod VITE_API_URL points at the
+// deployed backend, e.g. https://interview-api.onrender.com
+const host = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : '';
+export const fileBase = host;
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${host}/api`,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -14,7 +19,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // bounce to login on an expired/invalid session, but not while already on an
+    // auth page (avoids a redirect loop on a bad login attempt)
+    if (err.response?.status === 401 && !['/login', '/register'].includes(window.location.pathname)) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
