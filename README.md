@@ -33,7 +33,7 @@ A full-stack **MERN** app for practicing technical and behavioral interviews, wi
 
 ## Table of contents
 
-- [Why I built this](#why-i-built-this)
+- [About](#about)
 - [What it does](#what-it-does)
 - [A look inside](#a-look-inside)
 - [Tech stack](#tech-stack)
@@ -46,13 +46,15 @@ A full-stack **MERN** app for practicing technical and behavioral interviews, wi
 - [Roadmap](#roadmap)
 - [License](#license)
 
-## Why I built this
+## About
 
-Most interview-prep sites either just show you questions or "grade" your answer by checking whether it contains a few expected words. That falls apart fast: you can stuff an answer with buzzwords and score full marks, or explain something perfectly in your own words and score zero.
+Smart Interview Prep is a full-stack MERN application for rehearsing technical and behavioral interviews and being graded on the *substance* of an answer rather than on whether it happens to contain the right keywords.
 
-I wanted a tool that reads an answer the way an interviewer would — for **meaning** — and then tells you *why* it was good or weak and what to fix. So the core of the app sends each answer to an LLM (Google Gemini) and gets back a score, a verdict, and concrete strengths/improvements. To keep it from ever breaking when the AI is slow, over quota, or unconfigured, every AI call sits behind a keyword-matching fallback — so the app is always usable, and every answer records which path graded it.
+Most prep tools score by keyword matching, which is trivial to game and just as easy to fail unfairly: you can pad an answer with buzzwords and score full marks, or explain a concept correctly in your own words and score nothing. This app sends each answer to an LLM (Google Gemini) and grades it for meaning, returning a score, a verdict, and concrete strengths and improvements — the kind of feedback an interviewer would actually give.
 
-Around that core I built the things that make practice actually stick: questions generated from your own resume, weak-area analytics over time, an embedded code editor for coding rounds, and a seeded database so the dashboards look alive from the very first login.
+The AI is treated as an unreliable dependency, not a hard requirement. Every model call sits behind a timeout and a deterministic keyword-based fallback, so a slow, rate-limited, or unconfigured Gemini never takes the product down — and every answer records which path graded it. Around that core sit the features that make practice stick: questions generated from your own resume, weak-area analytics that trend over time, an embedded code editor for coding rounds, and a seeded database so every dashboard looks alive from the first login.
+
+On the engineering side it ships with JWT auth (email-verification and password-reset tokens are stored hashed and single-use), tiered rate limiting, centralized request validation and error handling, structured logging, and a Jest/Supertest suite that mocks Gemini and exercises the fallback path. It's containerized with Docker, runs its tests in CI on every push, and is deployed across MongoDB Atlas, Render, and Vercel.
 
 ## What it does
 
