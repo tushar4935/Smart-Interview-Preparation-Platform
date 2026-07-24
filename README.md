@@ -70,15 +70,21 @@ Around that core I built the things that make practice actually stick: questions
 
 ## A look inside
 
-> Stylized previews of the main screens — open the [live demo](https://smart-interview-preparation-platfor-theta.vercel.app) for the real thing.
+**Dashboard** — stats, score trend, and difficulty breakdown at a glance.
 
-| Dashboard | Interview session with AI feedback |
-|-----------|------------------------------------|
-| ![Dashboard](docs/screenshots/dashboard.svg) | ![Interview session](docs/screenshots/session.svg) |
+![Dashboard](docs/screenshots/dashboard.png)
 
-| Weak-area analytics |
-|---------------------|
-| ![Analytics](docs/screenshots/analytics.svg) |
+| Analytics — weak areas & trends | Start a new interview |
+|---------------------------------|-----------------------|
+| ![Analytics](docs/screenshots/analytics.png) | ![New interview](docs/screenshots/interview.png) |
+
+| Interview history | Practice from your resume |
+|-------------------|---------------------------|
+| ![History](docs/screenshots/history.png) | ![Resume manager](docs/screenshots/resume.png) |
+
+| Landing page | Your profile |
+|--------------|--------------|
+| ![Home](docs/screenshots/home.png) | ![Profile](docs/screenshots/profile.png) |
 
 ## Tech stack
 
@@ -204,7 +210,7 @@ The live demo runs on **MongoDB Atlas + Render (backend) + Vercel (frontend)**.
 ## Roadmap
 
 - [ ] Enable live Gemini scoring on the hosted demo (a valid key with quota — the code already supports it, no changes needed)
-- [ ] Real captured screenshots + a short demo GIF of a full interview
+- [ ] A short demo GIF of a full interview + AI feedback
 - [ ] More question categories and company-specific question sets
 - [ ] Shareable interview report links
 
