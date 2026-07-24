@@ -1,6 +1,7 @@
-const path = require('path');
 const fs = require('fs');
 const Resume = require('../models/Resume');
+const aiService = require('../services/aiService');
+const resumeParser = require('../services/resumeParser');
 
 const uploadResume = async (req, res) => {
   if (!req.file) {
@@ -57,4 +58,25 @@ const setDefaultResume = async (req, res) => {
   }
 };
 
-module.exports = { uploadResume, getResumes, deleteResume, setDefaultResume };
+// pull the skills out of a resume so the UI can show them before the user
+// commits to a resume-based interview
+const analyzeResume = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ _id: req.params.id, user: req.user._id });
+    if (!resume) return res.status(404).json({ success: false, message: 'Resume not found' });
+
+    const text = await resumeParser.extractText(resume.filePath, resume.mimeType);
+    if (!text || text.length < 30) {
+      return res.status(422).json({
+        success: false,
+        message: 'Could not read text from this resume. A text-based PDF works best.',
+      });
+    }
+    const skills = await aiService.extractSkills(text);
+    res.json({ success: true, skills, aiEnabled: aiService.isEnabled() });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { uploadResume, getResumes, deleteResume, setDefaultResume, analyzeResume };
