@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+logs
+coverage
+uploads/resumes/*
+!uploads/resumes/.gitkeep
+.git

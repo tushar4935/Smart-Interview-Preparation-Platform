@@ -1,0 +1,42 @@
+# One command to run the whole stack locally:
+#   docker compose up --build
+# then seed the database (first run only):
+#   docker compose exec backend npm run seed
+#
+# Frontend -> http://localhost:8080   API -> http://localhost:5000/api   Docs -> /api-docs
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://mongo:27017/smart-interview-prep
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      JWT_EXPIRE: 30d
+      CLIENT_URL: http://localhost:8080
+      # optional - without it the app runs on keyword scoring only
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  mongo_data:

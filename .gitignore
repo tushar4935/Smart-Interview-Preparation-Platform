@@ -1,10 +1,13 @@
 node_modules/
 .env
+.env.local
 .DS_Store
 dist/
 build/
 uploads/resumes/*
 !uploads/resumes/.gitkeep
 *.log
+logs/
+coverage/
 .vscode/
 .idea/
