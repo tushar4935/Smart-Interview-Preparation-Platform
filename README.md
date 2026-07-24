@@ -2,8 +2,7 @@
 
 A full-stack MERN app for practicing technical and behavioral interviews, with answers graded by AI (Google Gemini) instead of crude keyword matching. It generates questions from your resume, tracks your weak areas over time, and supports coding questions in an embedded editor.
 
-<!-- Once deployed, drop the live link here -->
-**Live demo:** _add your Vercel URL after deploying_
+**Live demo:** https://smart-interview-preparation-platfor-theta.vercel.app
 
 **Demo logins**
 
@@ -15,7 +14,7 @@ A full-stack MERN app for practicing technical and behavioral interviews, with a
 <!-- Record a short screen capture of a full interview + AI feedback and save it here -->
 ![Demo](docs/screenshots/demo.gif)
 
-![CI](https://github.com/<your-username>/<your-repo>/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/tushar4935/Smart-Interview-Preparation-Platform/actions/workflows/ci.yml/badge.svg)
 
 ---
 
