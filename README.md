@@ -209,10 +209,11 @@ The live demo runs on **MongoDB Atlas + Render (backend) + Vercel (frontend)**.
 
 ## Roadmap
 
-- [ ] Enable live Gemini scoring on the hosted demo (a valid key with quota — the code already supports it, no changes needed)
-- [ ] A short demo GIF of a full interview + AI feedback
-- [ ] More question categories and company-specific question sets
+- [ ] Company-specific question sets (e.g. FAANG, startups) and more categories
 - [ ] Shareable interview report links
+- [ ] Spaced-repetition review that resurfaces your weakest topics over time
+- [ ] Side-by-side comparison of multiple attempts at the same question
+- [ ] Real-time peer-to-peer mock interviews
 
 ## License
 
